@@ -1,0 +1,44 @@
+{
+    "name": "node-cloudflare-r2",
+    "version": "0.0.1",
+    "description": "S3 wrapper for Cloudflare R2.",
+    "main": "./lib/index.js",
+    "scripts": {
+        "build": "pnpm clean && tsc",
+        "build:watch": "pnpm clean && tsc --watch",
+        "clean": "rimraf lib/",
+        "test": "node tests/index.js"
+    },
+    "keywords": [
+        "cloudflare",
+        "r2",
+        "cloud",
+        "storage"
+    ],
+    "files": [
+        "lib/"
+    ],
+    "license": "ISC",
+    "author": "Surya Oktafendri <dev@f2face.com>",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/f2face/cloudflare-r2.git"
+    },
+    "dependencies": {
+        "@aws-sdk/client-s3": "^3.272.0",
+        "mime-types": "^2.1.35"
+    },
+    "devDependencies": {
+        "@tsconfig/recommended": "^1.0.2",
+        "@types/mime-types": "^2.1.1",
+        "@types/node": "^18.14.0",
+        "@typescript-eslint/eslint-plugin": "^5.48.0",
+        "@typescript-eslint/parser": "^5.48.0",
+        "eslint": "^8.31.0",
+        "eslint-config-prettier": "^8.6.0",
+        "prettier": "^2.8.1",
+        "rimraf": "^4.1.2",
+        "typescript": "^4.9.5"
+    }
+}
+
