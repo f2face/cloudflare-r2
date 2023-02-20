@@ -1,2 +1,1 @@
-import R2 from './R2';
-export default R2;
+export { R2 } from './R2';

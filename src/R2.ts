@@ -18,7 +18,7 @@ type BucketList = {
     };
 };
 
-export default class R2 {
+export class R2 {
     private config: Config;
     private r2: S3;
     public endpoint: string;
