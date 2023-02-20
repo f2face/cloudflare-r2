@@ -1,0 +1,44 @@
+{
+  "name": "@f2face/showroom",
+  "version": "0.8.1",
+  "description": "SHOWROOM private API.",
+  "author": "Surya Oktafendri <dev@f2face.com>",
+  "main": "lib/index.js",
+  "keywords": [
+    "showroom",
+    "showroom-live"
+  ],
+  "files": [
+    "lib/"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/f2face/showroom.git"
+  },
+  "scripts": {
+    "build": "npm run clean && tsc",
+    "build:watch": "npm run clean && tsc --watch",
+    "clean": "rimraf lib/",
+    "test": "node tests/index.js"
+  },
+  "dependencies": {
+    "axios": "^0.27.2",
+    "dayjs": "^1.11.7",
+    "proxy-agent": "^5.0.0",
+    "qs": "^6.11.0",
+    "ws": "^8.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.45",
+    "@types/qs": "^6.9.7",
+    "@types/ws": "^8.5.4",
+    "@typescript-eslint/eslint-plugin": "^5.48.0",
+    "@typescript-eslint/parser": "^5.48.0",
+    "eslint": "^8.31.0",
+    "eslint-config-prettier": "^8.6.0",
+    "prettier": "^2.8.1",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.9.4"
+  }
+}
