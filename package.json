@@ -1,6 +1,6 @@
 {
     "name": "node-cloudflare-r2",
-    "version": "0.0.1",
+    "version": "0.0.1-fix1",
     "description": "S3 wrapper for Cloudflare R2.",
     "main": "./lib/index.js",
     "scripts": {
@@ -41,4 +41,3 @@
         "typescript": "^4.9.5"
     }
 }
-
