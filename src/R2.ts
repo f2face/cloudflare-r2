@@ -102,11 +102,11 @@ export class R2 {
      * Returns the region the bucket resides in. For `Cloudflare R2`, the region is always `auto`.
      * @param bucketName
      */
-    async getBucketRegion(bucketName: string) {
+    async getBucketRegion(bucketName: string): Promise<string> {
         const result = await this.r2.getBucketLocation({
             Bucket: bucketName,
         });
 
-        return result.LocationConstraint;
+        return result.LocationConstraint || '';
     }
 }
