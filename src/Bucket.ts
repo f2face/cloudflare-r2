@@ -19,6 +19,15 @@ export type HeadObjectResponse = {
     customMetadata?: Record<string, string>;
 };
 
+export type CORSPolicy = {
+    allowedHeaders?: string[];
+    allowedMethods?: string[];
+    allowedOrigins?: string[];
+    exposeHeaders?: string[];
+    id?: string;
+    maxAgeSeconds?: number;
+};
+
 export class Bucket {
     private r2: S3;
     private endpoint: string;
@@ -101,6 +110,41 @@ export class Bucket {
             return result.$metadata.httpStatusCode === 200;
         } catch {
             return false;
+        }
+    }
+
+    /**
+     * Returns Cross-Origin Resource Sharing (CORS) policies of the bucket.
+     */
+    public async getCors(): Promise<CORSPolicy[]> {
+        try {
+            const result = await this.r2.getBucketCors({
+                Bucket: this.name,
+            });
+
+            const corsPolicies =
+                result.CORSRules?.map((rule) => {
+                    const {
+                        AllowedHeaders: allowedHeaders,
+                        AllowedMethods: allowedMethods,
+                        AllowedOrigins: allowedOrigins,
+                        ExposeHeaders: exposeHeaders,
+                        ID: id,
+                        MaxAgeSeconds: maxAgeSeconds,
+                    } = rule;
+                    return {
+                        allowedHeaders,
+                        allowedMethods,
+                        allowedOrigins,
+                        exposeHeaders,
+                        id,
+                        maxAgeSeconds,
+                    };
+                }) || [];
+
+            return corsPolicies;
+        } catch {
+            return [];
         }
     }
 

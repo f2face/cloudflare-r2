@@ -1,5 +1,5 @@
 import { S3 } from '@aws-sdk/client-s3';
-import { Bucket } from './Bucket';
+import { Bucket, CORSPolicy } from './Bucket';
 
 type Config = {
     accountId: string;
@@ -91,6 +91,14 @@ export class R2 {
         });
 
         return result.$metadata.httpStatusCode === 204;
+    }
+
+    /**
+     * Returns Cross-Origin Resource Sharing (CORS) policies of the bucket.
+     * @async
+     */
+    public async getBucketCors(bucketName: string): Promise<CORSPolicy[]> {
+        return await this.bucket(bucketName).getCors();
     }
 
     /**
