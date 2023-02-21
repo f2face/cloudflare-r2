@@ -66,7 +66,8 @@ export class Bucket {
      * @param bucketPublicUrl
      */
     public provideBucketPublicUrl(bucketPublicUrl: string) {
-        this.bucketPublicUrl = bucketPublicUrl.endsWith('/') ? bucketPublicUrl.replace(/\/+$/, '') : bucketPublicUrl;
+        const url = new URL(bucketPublicUrl);
+        this.bucketPublicUrl = url.origin;
     }
 
     /**
@@ -112,7 +113,7 @@ export class Bucket {
             Bucket: this.name,
         });
 
-        return result.LocationConstraint;
+        return result.LocationConstraint || 'auto';
     }
 
     public async getEncryption() {
@@ -170,10 +171,12 @@ export class Bucket {
      * @param file
      */
     public async deleteFile(file: string) {
-        await this.r2.deleteObject({
+        const result = await this.r2.deleteObject({
             Bucket: this.name,
             Key: file,
         });
+
+        return result.$metadata.httpStatusCode === 200;
     }
 
     /**

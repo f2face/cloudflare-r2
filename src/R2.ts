@@ -65,19 +65,12 @@ export class R2 {
      * @param bucketName
      */
     async bucketExists(bucketName: string): Promise<boolean> {
-        try {
-            const result = await this.r2.headBucket({
-                Bucket: bucketName,
-            });
-
-            return result.$metadata.httpStatusCode === 200;
-        } catch {
-            return false;
-        }
+        const bucket = this.bucket(bucketName);
+        return await bucket.exists();
     }
 
     /**
-     * Create a new R2 bucket.
+     * Create a new R2 bucket and returns `Bucket` object.
      * @param bucketName
      */
     async createBucket(bucketName: string): Promise<Bucket> {
@@ -89,13 +82,15 @@ export class R2 {
     }
 
     /**
-     * Delete an existing bucket.
+     * Delete an existing bucket. Returns true if success or throws error if fail.
      * @param bucketName
      */
-    async deleteBucket(bucketName: string): Promise<void> {
-        await this.r2.deleteBucket({
+    async deleteBucket(bucketName: string): Promise<boolean> {
+        const result = await this.r2.deleteBucket({
             Bucket: bucketName,
         });
+
+        return result.$metadata.httpStatusCode === 204;
     }
 
     /**
