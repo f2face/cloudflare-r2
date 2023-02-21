@@ -2,7 +2,7 @@ import { createReadStream, PathLike } from 'fs';
 import { S3 } from '@aws-sdk/client-s3';
 import mime from 'mime-types';
 
-type UploadedFile = {
+export type UploadFileResponse = {
     objectKey: string;
     uri: string;
     publicUrl: string | null;
@@ -10,7 +10,7 @@ type UploadedFile = {
     versionId?: string;
 };
 
-type HeadObjectResponse = {
+export type HeadObjectResponse = {
     lastModified?: Date;
     contentLength?: number;
     acceptRanges?: string;
@@ -81,7 +81,7 @@ export class Bucket {
      * @param objectKey
      * @returns
      */
-    protected generateObjectPublicUrl(objectKey: string) {
+    protected generateObjectPublicUrl(objectKey: string): string | null {
         if (!this.bucketPublicUrl) return null;
 
         return `${this.bucketPublicUrl}/${objectKey}`;
@@ -145,7 +145,7 @@ export class Bucket {
         file: PathLike,
         destination: string,
         customMetadata?: Record<string, string>
-    ): Promise<UploadedFile> {
+    ): Promise<UploadFileResponse> {
         const fileStream = createReadStream(file);
         destination = destination.startsWith('/') ? destination.replace(/^\/+/, '') : destination;
         const result = await this.r2.putObject({
