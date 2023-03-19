@@ -1,32 +1,7 @@
-import { createReadStream, PathLike } from 'fs';
 import { S3 } from '@aws-sdk/client-s3';
+import { createReadStream, PathLike } from 'fs';
 import mime from 'mime-types';
-
-export type UploadFileResponse = {
-    objectKey: string;
-    uri: string;
-    publicUrl: string | null;
-    etag?: string;
-    versionId?: string;
-};
-
-export type HeadObjectResponse = {
-    lastModified?: Date;
-    contentLength?: number;
-    acceptRanges?: string;
-    etag?: string;
-    contentType?: string;
-    customMetadata?: Record<string, string>;
-};
-
-export type CORSPolicy = {
-    allowedHeaders?: string[];
-    allowedMethods?: string[];
-    allowedOrigins?: string[];
-    exposeHeaders?: string[];
-    id?: string;
-    maxAgeSeconds?: number;
-};
+import { CORSPolicy, HeadObjectResponse, ObjectListResponse, UploadFileResponse } from './types';
 
 export class Bucket {
     private r2: S3;
@@ -35,11 +10,13 @@ export class Bucket {
 
     /**
      * Name of the bucket.
+     * @readonly
      */
     public readonly name: string;
 
     /**
      * URI of the bucket.
+     * @readonly
      */
     public readonly uri: string;
 
@@ -47,47 +24,47 @@ export class Bucket {
      * Instantiate `Bucket`.
      * @param r2 R2 instance.
      * @param bucketName Name of the bucket.
-     * @param endpoint R2 base endpoint.
+     * @param endpoint Cloudflare R2 base endpoint.
      */
     constructor(r2: S3, bucketName: string, endpoint: string) {
         this.r2 = r2;
         this.name = bucketName;
-        this.endpoint = endpoint;
+        this.endpoint = new URL(endpoint).origin;
         this.uri = `${this.endpoint}/${this.name}`;
     }
 
     /**
-     * Get the name of the bucket.
+     * Returns the name of the current bucket.
      */
     public getBucketName(): string {
         return this.name;
     }
 
     /**
-     * Get the URI of the bucket.
+     * Returns the URI for the current bucket.
      */
     public getUri(): string {
         return this.uri;
     }
 
     /**
-     * If public access to the bucket is allowed, use this method to provide bucket public URL to this `Bucket` object.
-     * @param bucketPublicUrl
+     * Sets the public URL for the current bucket. If public access to the bucket is allowed, use this method to provide bucket public URL to this `Bucket` object.
+     * @param bucketPublicUrl The public URL of the current bucket.
+     * @note If public access to the bucket is not allowed, the public URL set by this method will not be accessible to the public. Invoking this function will not have any effect on the security or access permissions of the bucket.
      */
     public provideBucketPublicUrl(bucketPublicUrl: string) {
-        const url = new URL(bucketPublicUrl);
-        this.bucketPublicUrl = url.origin;
+        this.bucketPublicUrl = new URL(bucketPublicUrl).origin;
     }
 
     /**
-     * Return the bucket public URL if it's set with `provideBucketPublicUrl` method.
+     * Returns the bucket public URL if it's set with `provideBucketPublicUrl` method.
      */
     public getPublicUrl(): string | undefined {
         return this.bucketPublicUrl;
     }
 
     /**
-     * Generate object public URL if the bucket public URL is set with `provideBucketPublicUrl` method.
+     * Generates object public URL if the bucket public URL is set with `provideBucketPublicUrl` method.
      * @param objectKey
      * @returns
      */
@@ -98,7 +75,7 @@ export class Bucket {
     }
 
     /**
-     * Determine if the bucket exists and you have permission to access it.
+     * Determines if the bucket exists and you have permission to access it.
      * @param bucketName
      */
     public async exists(): Promise<boolean> {
@@ -211,7 +188,7 @@ export class Bucket {
     }
 
     /**
-     * Delete a file in the bucket.
+     * Deletes a file in the bucket.
      * @param file
      */
     public async deleteFile(file: string) {
@@ -224,7 +201,7 @@ export class Bucket {
     }
 
     /**
-     * Retrieve metadata from an object without returning the object itself.
+     * Retrieves metadata from an object without returning the object itself.
      * @param objectKey
      */
     public async headObject(objectKey: string): Promise<HeadObjectResponse> {
@@ -241,5 +218,67 @@ export class Bucket {
             contentType: result.ContentType,
             customMetadata: result.Metadata,
         };
+    }
+
+    /**
+     * Returns some or all (up to 1,000) of the objects in the bucket with each request.
+     * @param maxResults The maximum number of objects to return per request. (Default: 1000)
+     * @param continuationToken A token that specifies where to start the listing.
+     */
+    public async listObjects(maxResults = 1000, continuationToken?: string): Promise<ObjectListResponse> {
+        const result = await this.r2.listObjectsV2({
+            Bucket: this.name,
+            MaxKeys: maxResults,
+            ContinuationToken: continuationToken,
+        });
+
+        return {
+            objects:
+                result.Contents?.map((content) => {
+                    const {
+                        Key: key,
+                        LastModified: lastModified,
+                        ETag: etag,
+                        ChecksumAlgorithm: checksumAlgorithm,
+                        Size: size,
+                        StorageClass: storageClass,
+                    } = content;
+                    return {
+                        key,
+                        lastModified,
+                        etag,
+                        checksumAlgorithm,
+                        size,
+                        storageClass,
+                    };
+                }) || [],
+            continuationToken: result.ContinuationToken,
+            nextContinuationToken: result.NextContinuationToken,
+        };
+    }
+
+    /**
+     * Copies an object from the current storage bucket to a new destination object in the same bucket.
+     * @param source The key of the source object to be copied.
+     * @param destination The key of the destination object where the source object will be copied to.
+     */
+    public async copyObject(source: string, destination: string) {
+        const result = await this.r2.copyObject({
+            Bucket: this.name,
+            CopySource: source,
+            Key: destination,
+        });
+
+        return result;
+    }
+
+    public async objectExists(objectkey: string): Promise<boolean> {
+        try {
+            const result = await this.headObject(objectkey);
+
+            return result.contentLength ? true : false;
+        } catch {
+            return false;
+        }
     }
 }

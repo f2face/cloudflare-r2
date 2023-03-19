@@ -34,5 +34,18 @@ const r2 = new R2({
 const bucket = r2.bucket('<BUCKET_NAME>');
 
 console.log(await bucket.exists());
+// true
+
+const upload = await bucket.uploadFile('/path/to/file', 'destination_file_name.ext');
+console.log(upload);
+/*
+{
+    objectKey: 'destination_file_name.ext',
+    uri: 'destination_file_name.ext',
+    publicUrl: 'https://.................../destination_file_name.ext',
+    etag: '',
+    versionId: '',
+    }
+*/
 ```
 
