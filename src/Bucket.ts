@@ -1,6 +1,5 @@
 import { S3 } from '@aws-sdk/client-s3';
 import { createReadStream, PathLike } from 'fs';
-import mime from 'mime-types';
 import { CORSPolicy, HeadObjectResponse, ObjectListResponse, UploadFileResponse } from './types';
 
 export class Bucket {
@@ -161,12 +160,13 @@ export class Bucket {
      * @param file File location.
      * @param destination Name of the file to put in the bucket. If `destination` contains slash character(s), this will put the file inside directories.
      * @param customMetadata Custom metadata to set to the uploaded file.
-     * @returns
+     * @param mimeType Optional mime type. (Default: `application/octet-stream`)
      */
     public async uploadFile(
         file: PathLike,
         destination: string,
-        customMetadata?: Record<string, string>
+        customMetadata?: Record<string, string>,
+        mimeType?: string
     ): Promise<UploadFileResponse> {
         const fileStream = createReadStream(file);
         destination = destination.startsWith('/') ? destination.replace(/^\/+/, '') : destination;
@@ -174,7 +174,7 @@ export class Bucket {
             Bucket: this.name,
             Key: destination,
             Body: fileStream,
-            ContentType: mime.lookup(file.toString()) || 'application/octet-stream',
+            ContentType: mimeType || 'application/octet-stream',
             Metadata: customMetadata,
         });
 
