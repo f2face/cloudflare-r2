@@ -169,22 +169,29 @@ export class Bucket {
         mimeType?: string
     ): Promise<UploadFileResponse> {
         const fileStream = createReadStream(file);
-        destination = destination.startsWith('/') ? destination.replace(/^\/+/, '') : destination;
-        const result = await this.r2.putObject({
-            Bucket: this.name,
-            Key: destination,
-            Body: fileStream,
-            ContentType: mimeType || 'application/octet-stream',
-            Metadata: customMetadata,
-        });
+        try {
+            destination = destination.startsWith('/') ? destination.replace(/^\/+/, '') : destination;
+            const result = await this.r2.putObject({
+                Bucket: this.name,
+                Key: destination,
+                Body: fileStream,
+                ContentType: mimeType || 'application/octet-stream',
+                Metadata: customMetadata,
+            });
 
-        return {
-            objectKey: destination,
-            uri: `${this.uri}/${destination}`,
-            publicUrl: this.generateObjectPublicUrl(destination),
-            etag: result.ETag,
-            versionId: result.VersionId,
-        };
+            fileStream.close();
+
+            return {
+                objectKey: destination,
+                uri: `${this.uri}/${destination}`,
+                publicUrl: this.generateObjectPublicUrl(destination),
+                etag: result.ETag,
+                versionId: result.VersionId,
+            };
+        } catch (error) {
+            fileStream.close();
+            throw error;
+        }
     }
 
     /**
