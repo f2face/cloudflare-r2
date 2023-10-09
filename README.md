@@ -33,6 +33,9 @@ const r2 = new R2({
 
 const bucket = r2.bucket('<BUCKET_NAME>');
 
+// Set your bucket's public URL
+bucket.provideBucketPublicUrl('https://pub-xxxxxxxxxxxxxxxxxxxxxxxxx.r2.dev');
+
 console.log(await bucket.exists());
 // true
 
@@ -42,7 +45,7 @@ console.log(upload);
 {
     objectKey: 'destination_file_name.ext',
     uri: 'destination_file_name.ext',
-    publicUrl: 'https://.................../destination_file_name.ext',
+    publicUrl: 'https://pub-xxxxxxxxxxxxxxxxxxxxxxxxx.r2.dev/destination_file_name.ext',
     etag: '',
     versionId: '',
     }
