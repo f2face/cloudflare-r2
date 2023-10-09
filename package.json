@@ -1,6 +1,6 @@
 {
     "name": "node-cloudflare-r2",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "S3 wrapper for Cloudflare R2.",
     "main": "./lib/index.js",
     "scripts": {
@@ -26,17 +26,17 @@
         "url": "https://github.com/f2face/cloudflare-r2.git"
     },
     "dependencies": {
-        "@aws-sdk/client-s3": "^3.423.0"
+        "@aws-sdk/client-s3": "^3.427.0"
     },
     "devDependencies": {
         "@tsconfig/recommended": "^1.0.3",
         "@types/jest": "^29.5.5",
         "@types/mime-types": "^2.1.2",
-        "@types/node": "^20.8.2",
+        "@types/node": "^20.8.3",
         "@typescript-eslint/eslint-plugin": "^6.7.4",
         "@typescript-eslint/parser": "^6.7.4",
         "dotenv": "^16.3.1",
-        "eslint": "^8.50.0",
+        "eslint": "^8.51.0",
         "eslint-config-prettier": "^9.0.0",
         "jest": "^29.7.0",
         "prettier": "^3.0.3",
@@ -45,3 +45,4 @@
         "typescript": "^5.2.2"
     }
 }
+
