@@ -1,9 +1,9 @@
-import { S3 } from '@aws-sdk/client-s3';
+import { S3 as R2 } from '@aws-sdk/client-s3';
 import { createReadStream, PathLike } from 'fs';
 import { CORSPolicy, HeadObjectResponse, ObjectListResponse, UploadFileResponse } from './types';
 
 export class Bucket {
-    private r2: S3;
+    private r2: R2;
     private endpoint: string;
     private bucketPublicUrl?: string;
 
@@ -25,7 +25,7 @@ export class Bucket {
      * @param bucketName Name of the bucket.
      * @param endpoint Cloudflare R2 base endpoint.
      */
-    constructor(r2: S3, bucketName: string, endpoint: string) {
+    constructor(r2: R2, bucketName: string, endpoint: string) {
         this.r2 = r2;
         this.name = bucketName;
         this.endpoint = new URL(endpoint).origin;
