@@ -1,6 +1,6 @@
 {
     "name": "node-cloudflare-r2",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "description": "S3 wrapper for Cloudflare R2.",
     "main": "./lib/index.js",
     "scripts": {
@@ -19,6 +19,18 @@
     "files": [
         "lib/"
     ],
+    "exports": {
+        ".": {
+            "types": "./lib/index.d.ts",
+            "import": "./lib/index.js",
+            "require": "./lib/index.js"
+        },
+        "./types": {
+            "types": "./lib/types.d.ts",
+            "import": "./lib/types.js",
+            "require": "./lib/types.js"
+        }
+    },
     "license": "ISC",
     "author": "Surya Oktafendri <dev@f2face.com>",
     "repository": {
