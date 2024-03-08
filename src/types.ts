@@ -1,3 +1,28 @@
+export type CloudflareR2Config = {
+    accountId: string;
+    accessKeyId: string;
+    secretAccessKey: string;
+};
+
+export type BucketList = {
+    buckets: {
+        name?: string;
+        creationDate?: Date;
+    }[];
+    owner: {
+        id?: string;
+        displayName?: string;
+    };
+};
+
+export enum LocationHint {
+    WesternNorthAmerica = 'wnam',
+    EasternNorthAmerica = 'enam',
+    WesternEurope = 'weur',
+    EasternEurope = 'eeur',
+    AsiaPacific = 'apac',
+}
+
 export type UploadFileResponse = {
     objectKey: string;
     uri: string;

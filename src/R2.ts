@@ -1,34 +1,17 @@
-import { S3 } from '@aws-sdk/client-s3';
+import { CreateBucketCommand, DeleteBucketCommand, ListBucketsCommand, S3Client } from '@aws-sdk/client-s3';
 import { Bucket } from './Bucket';
-import { CORSPolicy } from './types';
-
-type Config = {
-    accountId: string;
-    accessKeyId: string;
-    secretAccessKey: string;
-};
-
-type BucketList = {
-    buckets: {
-        name?: string;
-        creationDate?: Date;
-    }[];
-    owner: {
-        id?: string;
-        displayName?: string;
-    };
-};
+import { BucketList, CORSPolicy, CloudflareR2Config } from './types';
 
 export class R2 {
-    private config: Config;
-    private r2: S3;
+    private config: CloudflareR2Config;
+    private r2: S3Client;
     public endpoint: string;
 
-    constructor(config: Config) {
+    constructor(config: CloudflareR2Config) {
         this.config = config;
         this.endpoint = `https://${this.config.accountId}.r2.cloudflarestorage.com`;
 
-        this.r2 = new S3({
+        this.r2 = new S3Client({
             endpoint: this.endpoint,
             credentials: {
                 accessKeyId: this.config.accessKeyId,
@@ -52,7 +35,7 @@ export class R2 {
      * @async
      */
     public async listBuckets(): Promise<BucketList> {
-        const result = await this.r2.listBuckets({});
+        const result = await this.r2.send(new ListBucketsCommand({}));
         const buckets =
             result.Buckets?.map((bucket) => {
                 return {
@@ -82,9 +65,11 @@ export class R2 {
      * @param bucketName
      */
     public async createBucket(bucketName: string): Promise<Bucket> {
-        await this.r2.createBucket({
-            Bucket: bucketName,
-        });
+        await this.r2.send(
+            new CreateBucketCommand({
+                Bucket: bucketName,
+            })
+        );
 
         return new Bucket(this.r2, bucketName, this.endpoint);
     }
@@ -95,9 +80,11 @@ export class R2 {
      * @param bucketName
      */
     public async deleteBucket(bucketName: string): Promise<boolean> {
-        const result = await this.r2.deleteBucket({
-            Bucket: bucketName,
-        });
+        const result = await this.r2.send(
+            new DeleteBucketCommand({
+                Bucket: bucketName,
+            })
+        );
 
         return result.$metadata.httpStatusCode === 204;
     }
