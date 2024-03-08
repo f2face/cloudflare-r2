@@ -1,11 +1,24 @@
-import { S3 as R2 } from '@aws-sdk/client-s3';
+import {
+    CopyObjectCommand,
+    DeleteObjectCommand,
+    GetBucketCorsCommand,
+    GetBucketEncryptionCommand,
+    GetBucketLocationCommand,
+    GetObjectCommand,
+    HeadBucketCommand,
+    HeadObjectCommand,
+    ListObjectsCommand,
+    PutObjectCommand,
+    type S3Client as R2,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { createReadStream, PathLike } from 'fs';
 import { CORSPolicy, HeadObjectResponse, ObjectListResponse, UploadFileResponse } from './types';
 
 export class Bucket {
     private r2: R2;
     private endpoint: string;
-    private bucketPublicUrl?: string;
+    private bucketPublicUrls: string[] = [];
 
     /**
      * Name of the bucket.
@@ -46,20 +59,57 @@ export class Bucket {
         return this.uri;
     }
 
+    public provideBucketPublicUrl(bucketPublicUrl: string): this;
+    public provideBucketPublicUrl(bucketPublicUrls: string[]): this;
+    public provideBucketPublicUrl(...bucketPublicUrls: string[]): this;
+
     /**
      * Sets the public URL for the current bucket. If public access to the bucket is allowed, use this method to provide bucket public URL to this `Bucket` object.
      * @param bucketPublicUrl The public URL of the current bucket.
      * @note If public access to the bucket is not allowed, the public URL set by this method will not be accessible to the public. Invoking this function will not have any effect on the security or access permissions of the bucket.
      */
-    public provideBucketPublicUrl(bucketPublicUrl: string) {
-        this.bucketPublicUrl = new URL(bucketPublicUrl).origin;
+    public provideBucketPublicUrl(bucketPublicUrl: string | string[]): this {
+        if (typeof bucketPublicUrl === 'string') {
+            this.bucketPublicUrls.push(new URL(bucketPublicUrl).origin);
+        } else if (Array.isArray(bucketPublicUrl)) {
+            for (const url of bucketPublicUrl) {
+                if (typeof url === 'string') {
+                    this.provideBucketPublicUrl(url);
+                }
+            }
+        }
+
+        return this;
     }
 
     /**
      * Returns the bucket public URL if it's set with `provideBucketPublicUrl` method.
+     * @deprecated
      */
     public getPublicUrl(): string | undefined {
-        return this.bucketPublicUrl;
+        return this.bucketPublicUrls.length ? this.bucketPublicUrls.at(0) : undefined;
+    }
+
+    /**
+     * Returns all public URLs of the bucket if it's set with `provideBucketPublicUrl` method.
+     */
+    public getPublicUrls(): string[] {
+        return this.bucketPublicUrls;
+    }
+
+    /**
+     * Returns the signed URL of an object.
+     * @param objectKey
+     * @param expiresIn Expiration time in seconds.
+     * @returns
+     */
+    public async getObjectSignedUrl(objectKey: string, expiresIn: number) {
+        const obj = new GetObjectCommand({
+            Bucket: this.name,
+            Key: objectKey,
+        });
+        const signedUrl = await getSignedUrl(this.r2, obj, { expiresIn });
+        return signedUrl;
     }
 
     /**
@@ -68,9 +118,9 @@ export class Bucket {
      * @returns
      */
     protected generateObjectPublicUrl(objectKey: string): string | null {
-        if (!this.bucketPublicUrl) return null;
+        if (!this.bucketPublicUrls.length) return null;
 
-        return `${this.bucketPublicUrl}/${objectKey}`;
+        return `${this.bucketPublicUrls.at(0)}/${objectKey}`;
     }
 
     /**
@@ -79,9 +129,11 @@ export class Bucket {
      */
     public async exists(): Promise<boolean> {
         try {
-            const result = await this.r2.headBucket({
-                Bucket: this.name,
-            });
+            const result = await this.r2.send(
+                new HeadBucketCommand({
+                    Bucket: this.name,
+                })
+            );
 
             return result.$metadata.httpStatusCode === 200;
         } catch {
@@ -94,9 +146,11 @@ export class Bucket {
      */
     public async getCors(): Promise<CORSPolicy[]> {
         try {
-            const result = await this.r2.getBucketCors({
-                Bucket: this.name,
-            });
+            const result = await this.r2.send(
+                new GetBucketCorsCommand({
+                    Bucket: this.name,
+                })
+            );
 
             const corsPolicies =
                 result.CORSRules?.map((rule) => {
@@ -129,17 +183,20 @@ export class Bucket {
      * @param bucketName
      */
     public async getRegion() {
-        const result = await this.r2.getBucketLocation({
-            Bucket: this.name,
-        });
-
+        const result = await this.r2.send(
+            new GetBucketLocationCommand({
+                Bucket: this.name,
+            })
+        );
         return result.LocationConstraint || 'auto';
     }
 
     public async getEncryption() {
-        const result = await this.r2.getBucketEncryption({
-            Bucket: this.name,
-        });
+        const result = await this.r2.send(
+            new GetBucketEncryptionCommand({
+                Bucket: this.name,
+            })
+        );
 
         const rules =
             result.ServerSideEncryptionConfiguration?.Rules?.map((rule) => {
@@ -171,13 +228,15 @@ export class Bucket {
         const fileStream = createReadStream(file);
         try {
             destination = destination.startsWith('/') ? destination.replace(/^\/+/, '') : destination;
-            const result = await this.r2.putObject({
-                Bucket: this.name,
-                Key: destination,
-                Body: fileStream,
-                ContentType: mimeType || 'application/octet-stream',
-                Metadata: customMetadata,
-            });
+            const result = await this.r2.send(
+                new PutObjectCommand({
+                    Bucket: this.name,
+                    Key: destination,
+                    Body: fileStream,
+                    ContentType: mimeType || 'application/octet-stream',
+                    Metadata: customMetadata,
+                })
+            );
 
             fileStream.close();
 
@@ -195,14 +254,34 @@ export class Bucket {
     }
 
     /**
+     * **DEPRECATED. Use `deleteObject()` instead.**
+     *
      * Deletes a file in the bucket.
      * @param file
+     * @deprecated
      */
     public async deleteFile(file: string) {
-        const result = await this.r2.deleteObject({
-            Bucket: this.name,
-            Key: file,
-        });
+        const result = await this.r2.send(
+            new DeleteObjectCommand({
+                Bucket: this.name,
+                Key: file,
+            })
+        );
+
+        return result.$metadata.httpStatusCode === 200;
+    }
+
+    /**
+     * Deletes an object in the bucket.
+     * @param objectKey
+     */
+    public async deleteObject(objectKey: string) {
+        const result = await this.r2.send(
+            new DeleteObjectCommand({
+                Bucket: this.name,
+                Key: objectKey,
+            })
+        );
 
         return result.$metadata.httpStatusCode === 200;
     }
@@ -212,10 +291,12 @@ export class Bucket {
      * @param objectKey
      */
     public async headObject(objectKey: string): Promise<HeadObjectResponse> {
-        const result = await this.r2.headObject({
-            Bucket: this.name,
-            Key: objectKey,
-        });
+        const result = await this.r2.send(
+            new HeadObjectCommand({
+                Bucket: this.name,
+                Key: objectKey,
+            })
+        );
 
         return {
             lastModified: result.LastModified,
@@ -230,14 +311,16 @@ export class Bucket {
     /**
      * Returns some or all (up to 1,000) of the objects in the bucket with each request.
      * @param maxResults The maximum number of objects to return per request. (Default: 1000)
-     * @param continuationToken A token that specifies where to start the listing.
+     * @param marker A token that specifies where to start the listing.
      */
-    public async listObjects(maxResults = 1000, continuationToken?: string): Promise<ObjectListResponse> {
-        const result = await this.r2.listObjectsV2({
-            Bucket: this.name,
-            MaxKeys: maxResults,
-            ContinuationToken: continuationToken,
-        });
+    public async listObjects(maxResults = 1000, marker?: string): Promise<ObjectListResponse> {
+        const result = await this.r2.send(
+            new ListObjectsCommand({
+                Bucket: this.name,
+                MaxKeys: maxResults,
+                Marker: marker,
+            })
+        );
 
         return {
             objects:
@@ -259,8 +342,8 @@ export class Bucket {
                         storageClass,
                     };
                 }) || [],
-            continuationToken: result.ContinuationToken,
-            nextContinuationToken: result.NextContinuationToken,
+            continuationToken: result.Marker,
+            nextContinuationToken: result.NextMarker,
         };
     }
 
@@ -270,11 +353,13 @@ export class Bucket {
      * @param destination The key of the destination object where the source object will be copied to.
      */
     public async copyObject(source: string, destination: string) {
-        const result = await this.r2.copyObject({
-            Bucket: this.name,
-            CopySource: source,
-            Key: destination,
-        });
+        const result = await this.r2.send(
+            new CopyObjectCommand({
+                Bucket: this.name,
+                CopySource: source,
+                Key: destination,
+            })
+        );
 
         return result;
     }
