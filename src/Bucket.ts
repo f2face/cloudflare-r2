@@ -13,7 +13,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { Upload, type Progress } from '@aws-sdk/lib-storage';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { ReadStream, createReadStream, type PathLike } from 'fs';
+import { type ReadStream, createReadStream, type PathLike } from 'fs';
 import { basename } from 'path';
 import type { Readable } from 'stream';
 import type { CORSPolicy, HeadObjectResponse, ObjectListResponse, UploadFileResponse } from './types';
