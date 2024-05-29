@@ -1,6 +1,6 @@
 import { CreateBucketCommand, DeleteBucketCommand, ListBucketsCommand, S3Client } from '@aws-sdk/client-s3';
 import { Bucket } from './Bucket';
-import { BucketList, CORSPolicy, CloudflareR2Config } from './types';
+import type { BucketList, CORSPolicy, CloudflareR2Config } from './types';
 
 export class R2 {
     private config: CloudflareR2Config;

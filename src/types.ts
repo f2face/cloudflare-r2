@@ -15,18 +15,23 @@ export type BucketList = {
     };
 };
 
-export enum LocationHint {
+/* export enum RegionHint {
     WesternNorthAmerica = 'wnam',
     EasternNorthAmerica = 'enam',
     WesternEurope = 'weur',
     EasternEurope = 'eeur',
     AsiaPacific = 'apac',
-}
+} */
 
 export type UploadFileResponse = {
     objectKey: string;
     uri: string;
+    /**
+     * **DEPRECATED. This property will be remove in the next major version. Use `publicUrls` property instead.**
+     * @deprecated
+     */
     publicUrl: string | null;
+    publicUrls: Array<string>;
     etag?: string;
     versionId?: string;
 };

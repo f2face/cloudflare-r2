@@ -11,9 +11,12 @@ import {
     PutObjectCommand,
     type S3Client as R2,
 } from '@aws-sdk/client-s3';
+import { Upload, type Progress } from '@aws-sdk/lib-storage';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { createReadStream, PathLike } from 'fs';
-import { CORSPolicy, HeadObjectResponse, ObjectListResponse, UploadFileResponse } from './types';
+import { ReadStream, createReadStream, type PathLike } from 'fs';
+import { basename } from 'path';
+import type { Readable } from 'stream';
+import type { CORSPolicy, HeadObjectResponse, ObjectListResponse, UploadFileResponse } from './types';
 
 export class Bucket {
     private r2: R2;
@@ -61,7 +64,6 @@ export class Bucket {
 
     public provideBucketPublicUrl(bucketPublicUrl: string): this;
     public provideBucketPublicUrl(bucketPublicUrls: string[]): this;
-    public provideBucketPublicUrl(...bucketPublicUrls: string[]): this;
 
     /**
      * Sets the public URL for the current bucket. If public access to the bucket is allowed, use this method to provide bucket public URL to this `Bucket` object.
@@ -70,12 +72,11 @@ export class Bucket {
      */
     public provideBucketPublicUrl(bucketPublicUrl: string | string[]): this {
         if (typeof bucketPublicUrl === 'string') {
-            this.bucketPublicUrls.push(new URL(bucketPublicUrl).origin);
+            const origin = new URL(bucketPublicUrl).origin;
+            this.bucketPublicUrls.push(origin);
         } else if (Array.isArray(bucketPublicUrl)) {
             for (const url of bucketPublicUrl) {
-                if (typeof url === 'string') {
-                    this.provideBucketPublicUrl(url);
-                }
+                if (typeof url === 'string') this.provideBucketPublicUrl(url);
             }
         }
 
@@ -83,6 +84,8 @@ export class Bucket {
     }
 
     /**
+     * **DEPRECATED. This method will be removed in the next major version. Use `getPublicUrls()` instead.**
+     *
      * Returns the bucket public URL if it's set with `provideBucketPublicUrl` method.
      * @deprecated
      */
@@ -91,19 +94,18 @@ export class Bucket {
     }
 
     /**
-     * Returns all public URLs of the bucket if it's set with `provideBucketPublicUrl` method.
+     * Returns all public URLs of the bucket if it's set with `provideBucketPublicUrl()` method.
      */
     public getPublicUrls(): string[] {
         return this.bucketPublicUrls;
     }
 
     /**
-     * Returns the signed URL of an object.
+     * Returns the signed URL of an object. This method does not check whether the object exists or not.
      * @param objectKey
      * @param expiresIn Expiration time in seconds.
-     * @returns
      */
-    public async getObjectSignedUrl(objectKey: string, expiresIn: number) {
+    public async getObjectSignedUrl(objectKey: string, expiresIn: number): Promise<string> {
         const obj = new GetObjectCommand({
             Bucket: this.name,
             Key: objectKey,
@@ -115,7 +117,6 @@ export class Bucket {
     /**
      * Generates object public URL if the bucket public URL is set with `provideBucketPublicUrl` method.
      * @param objectKey
-     * @returns
      */
     protected generateObjectPublicUrl(objectKey: string): string | null {
         if (!this.bucketPublicUrls.length) return null;
@@ -124,7 +125,25 @@ export class Bucket {
     }
 
     /**
-     * Determines if the bucket exists and you have permission to access it.
+     * Generates object public URLs if the bucket public URL is set with `provideBucketPublicUrl` method.
+     * @param objectKey
+     */
+    protected generateObjectPublicUrls(objectKey: string): Array<string> {
+        if (!this.bucketPublicUrls.length) return [];
+
+        return this.bucketPublicUrls.map((publicUrl) => `${publicUrl}/${objectKey}`);
+    }
+
+    /**
+     * Returns all public URL of an object in the bucket.
+     * @param objectKey
+     */
+    public getObjectPublicUrls(objectKey: string): string[] {
+        return this.bucketPublicUrls.map((bucketPublicUrl) => `${bucketPublicUrl}/${objectKey}`);
+    }
+
+    /**
+     * Checks if the bucket exists and you have permission to access it.
      * @param bucketName
      */
     public async exists(): Promise<boolean> {
@@ -142,9 +161,19 @@ export class Bucket {
     }
 
     /**
+     * **DEPRECATED. This method will be remove in the next major version. Use `getCorsPolicies()` instead.**
+     *
      * Returns Cross-Origin Resource Sharing (CORS) policies of the bucket.
+     * @deprecated
      */
     public async getCors(): Promise<CORSPolicy[]> {
+        return this.getCorsPolicies();
+    }
+
+    /**
+     * Returns Cross-Origin Resource Sharing (CORS) policies of the bucket.
+     */
+    public async getCorsPolicies(): Promise<CORSPolicy[]> {
         try {
             const result = await this.r2.send(
                 new GetBucketCorsCommand({
@@ -179,7 +208,7 @@ export class Bucket {
     }
 
     /**
-     * Returns the region the bucket resides in. For `Cloudflare R2`, the region is always `auto`.
+     * Returns the region the bucket resides in.
      * @param bucketName
      */
     public async getRegion() {
@@ -191,6 +220,9 @@ export class Bucket {
         return result.LocationConstraint || 'auto';
     }
 
+    /**
+     * Returns the encryption configuration of the bucket.
+     */
     public async getEncryption() {
         const result = await this.r2.send(
             new GetBucketEncryptionCommand({
@@ -213,7 +245,7 @@ export class Bucket {
     }
 
     /**
-     * Upload a file to the bucket.
+     * Upload a local file to the bucket. If the file already exists in the bucket, it will be overwritten.
      * @param file File location.
      * @param destination Name of the file to put in the bucket. If `destination` contains slash character(s), this will put the file inside directories.
      * @param customMetadata Custom metadata to set to the uploaded file.
@@ -221,32 +253,15 @@ export class Bucket {
      */
     public async uploadFile(
         file: PathLike,
-        destination: string,
+        destination?: string,
         customMetadata?: Record<string, string>,
         mimeType?: string
     ): Promise<UploadFileResponse> {
         const fileStream = createReadStream(file);
         try {
-            destination = destination.startsWith('/') ? destination.replace(/^\/+/, '') : destination;
-            const result = await this.r2.send(
-                new PutObjectCommand({
-                    Bucket: this.name,
-                    Key: destination,
-                    Body: fileStream,
-                    ContentType: mimeType || 'application/octet-stream',
-                    Metadata: customMetadata,
-                })
-            );
-
+            const result = this.upload(fileStream, destination || basename(file.toString()), customMetadata, mimeType);
             fileStream.close();
-
-            return {
-                objectKey: destination,
-                uri: `${this.uri}/${destination}`,
-                publicUrl: this.generateObjectPublicUrl(destination),
-                etag: result.ETag,
-                versionId: result.VersionId,
-            };
+            return result;
         } catch (error) {
             fileStream.close();
             throw error;
@@ -254,7 +269,84 @@ export class Bucket {
     }
 
     /**
-     * **DEPRECATED. Use `deleteObject()` instead.**
+     * Upload an object to the bucket.
+     * @param contents The object contents to upload.
+     * @param destination The name of the file to put in the bucket. If `destination` contains slash character(s), this will put the file inside directories. If the file already exists in the bucket, it will be overwritten.
+     * @param customMetadata Custom metadata to set to the uploaded file.
+     * @param mimeType Optional mime type. (Default: `application/octet-stream`)
+     */
+    public async upload(
+        contents: string | Uint8Array | Buffer | Readable | ReadStream,
+        destination: string,
+        customMetadata?: Record<string, string>,
+        mimeType?: string
+    ): Promise<UploadFileResponse> {
+        destination = destination.startsWith('/') ? destination.replace(/^\/+/, '') : destination;
+
+        const result = await this.r2.send(
+            new PutObjectCommand({
+                Bucket: this.name,
+                Key: destination,
+                Body: contents,
+                ContentType: mimeType || 'application/octet-stream',
+                Metadata: customMetadata,
+            })
+        );
+
+        return {
+            objectKey: destination,
+            uri: `${this.uri}/${destination}`,
+            publicUrl: this.generateObjectPublicUrl(destination),
+            publicUrls: this.generateObjectPublicUrls(destination),
+            etag: result.ETag,
+            versionId: result.VersionId,
+        };
+    }
+
+    /**
+     * Upload an object or stream to the bucket. This is a new method to put object to the bucket using multipart upload.
+     * @param contents The object contents to upload.
+     * @param destination The name of the file to put in the bucket. If `destination` contains slash character(s), this will put the file inside directories. If the file already exists in the bucket, it will be overwritten.
+     * @param customMetadata Custom metadata to set to the uploaded file.
+     * @param mimeType Optional mime type. (Default: `application/octet-stream`)
+     * @param onProgress A callback to handle progress data.
+     */
+    public async uploadStream(
+        contents: string | Uint8Array | Buffer | Readable | ReadStream,
+        destination: string,
+        customMetadata?: Record<string, string>,
+        mimeType?: string,
+        onProgress?: (progress: Progress) => void
+    ): Promise<UploadFileResponse> {
+        destination = destination.startsWith('/') ? destination.replace(/^\/+/, '') : destination;
+
+        const upload = new Upload({
+            client: this.r2,
+            params: {
+                Bucket: this.name,
+                Key: destination,
+                Body: contents,
+                ContentType: mimeType || 'application/octet-stream',
+                Metadata: customMetadata,
+            },
+        });
+
+        if (onProgress) upload.on('httpUploadProgress', (progress) => onProgress(progress));
+
+        const result = await upload.done();
+
+        return {
+            objectKey: destination,
+            uri: `${this.uri}/${destination}`,
+            publicUrl: this.generateObjectPublicUrl(destination),
+            publicUrls: this.generateObjectPublicUrls(destination),
+            etag: result.ETag,
+            versionId: result.VersionId,
+        };
+    }
+
+    /**
+     * **DEPRECATED. This method will be removed in the next major version. Use `deleteObject()` instead.**
      *
      * Deletes a file in the bucket.
      * @param file
@@ -349,21 +441,25 @@ export class Bucket {
 
     /**
      * Copies an object from the current storage bucket to a new destination object in the same bucket.
-     * @param source The key of the source object to be copied.
-     * @param destination The key of the destination object where the source object will be copied to.
+     * @param sourceObjectKey The key of the source object to be copied.
+     * @param destinationObjectKey The key of the destination object where the source object will be copied to.
      */
-    public async copyObject(source: string, destination: string) {
+    public async copyObject(sourceObjectKey: string, destinationObjectKey: string) {
         const result = await this.r2.send(
             new CopyObjectCommand({
                 Bucket: this.name,
-                CopySource: source,
-                Key: destination,
+                CopySource: sourceObjectKey,
+                Key: destinationObjectKey,
             })
         );
 
         return result;
     }
 
+    /**
+     * Checks if an object exists in the bucket.
+     * @param objectkey
+     */
     public async objectExists(objectkey: string): Promise<boolean> {
         try {
             const result = await this.headObject(objectkey);

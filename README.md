@@ -11,12 +11,22 @@ This is a wrapper of the AWS S3 client library, designed to provide a user-frien
 
 ### Installation
 
+#### npm
+
 ```bash
 npm install node-cloudflare-r2
 ```
 
+#### pnpm
+
+```bash
+pnpm install node-cloudflare-r2
+```
+
 > It is highly recommended that you use a specific version number in your installation to anticipate any breaking changes that may occur in future releases. For example: \
-> `npm install node-cloudflare-r2@1.0.0` \
+> `npm install node-cloudflare-r2@0.2.0` \
+> or \
+> `pnpm install node-cloudflare-r2@0.2.0` \
 > \
 > Check the latest version number in the [release page](https://github.com/f2face/cloudflare-r2/releases).
 
@@ -24,6 +34,7 @@ npm install node-cloudflare-r2
 
 ```javascript
 import { R2 } from 'node-cloudflare-r2';
+import { createReadStream } from 'fs';
 
 const r2 = new R2({
     accountId: '<YOUR_ACCOUNT_ID>',
@@ -39,6 +50,7 @@ bucket.provideBucketPublicUrl('https://pub-xxxxxxxxxxxxxxxxxxxxxxxxx.r2.dev');
 console.log(await bucket.exists());
 // true
 
+// Upload local file
 const upload = await bucket.uploadFile('/path/to/file', 'destination_file_name.ext');
 console.log(upload);
 /*
@@ -50,5 +62,8 @@ console.log(upload);
     versionId: '',
     }
 */
+
+// Upload file or stream
+const uploadStream = await bucket.uploadStream(createReadStream('/path/to/file'), 'destination_file_name-stream.ext');
 ```
 
