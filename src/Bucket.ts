@@ -353,14 +353,7 @@ export class Bucket {
      * @deprecated
      */
     public async deleteFile(file: string) {
-        const result = await this.r2.send(
-            new DeleteObjectCommand({
-                Bucket: this.name,
-                Key: file,
-            })
-        );
-
-        return result.$metadata.httpStatusCode === 200;
+        return this.deleteObject(file);
     }
 
     /**
