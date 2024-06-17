@@ -259,7 +259,12 @@ export class Bucket {
     ): Promise<UploadFileResponse> {
         const fileStream = createReadStream(file);
         try {
-            const result = this.upload(fileStream, destination || basename(file.toString()), customMetadata, mimeType);
+            const result = await this.upload(
+                fileStream,
+                destination || basename(file.toString()),
+                customMetadata,
+                mimeType
+            );
             fileStream.close();
             return result;
         } catch (error) {
