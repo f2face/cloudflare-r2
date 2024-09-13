@@ -2,6 +2,11 @@ export type CloudflareR2Config = {
     accountId: string;
     accessKeyId: string;
     secretAccessKey: string;
+    /**
+     * If `true`, the endpoint will be `https://{accountId}.eu.r2.cloudflarestorage.com`.
+     * @default false
+      */
+    eu?: boolean;
 };
 
 export type BucketList = {
