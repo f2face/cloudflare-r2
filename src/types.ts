@@ -23,7 +23,7 @@ export type UploadFileResponse = {
     objectKey: string;
     uri: string;
     /**
-     * **DEPRECATED. This property will be remove in the next major version. Use `publicUrls` property instead.**
+     * **DEPRECATED. This property will be removed in the next major version. Use `publicUrls` property instead.**
      * @deprecated
      */
     publicUrl: string | null;
