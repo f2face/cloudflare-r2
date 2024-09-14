@@ -9,7 +9,12 @@ export class R2 {
 
     constructor(config: CloudflareR2Config) {
         this.config = config;
-        this.endpoint = `https://${this.config.accountId}.r2.cloudflarestorage.com`;
+
+        if (this.config.jurisdiction) {
+          this.endpoint = `https://${this.config.accountId}.${this.config.jurisdiction}.r2.cloudflarestorage.com`;
+        } else {
+          this.endpoint = `https://${this.config.accountId}.r2.cloudflarestorage.com`;
+        }
 
         this.r2 = new S3Client({
             endpoint: this.endpoint,
