@@ -4,8 +4,8 @@ export type CloudflareR2Config = {
     secretAccessKey: string;
     /**
      * If set, the endpoint will be `https://{accountId}.{jurisdiction}.r2.cloudflarestorage.com`.
-      */
-    jurisdiction?: 'eu' | 'fedramp',
+     */
+    jurisdiction?: 'eu' | 'fedramp';
 };
 
 export type BucketList = {
@@ -18,14 +18,6 @@ export type BucketList = {
         displayName?: string;
     };
 };
-
-/* export enum RegionHint {
-    WesternNorthAmerica = 'wnam',
-    EasternNorthAmerica = 'enam',
-    WesternEurope = 'weur',
-    EasternEurope = 'eeur',
-    AsiaPacific = 'apac',
-} */
 
 export type UploadFileResponse = {
     objectKey: string;
