@@ -76,7 +76,7 @@ export class Bucket {
             if (!this.bucketPublicUrls.includes(origin)) this.bucketPublicUrls.push(origin);
         } else if (Array.isArray(bucketPublicUrl)) {
             for (const url of bucketPublicUrl) {
-                if (typeof url === 'string') this.provideBucketPublicUrl(url);
+                this.provideBucketPublicUrl(url);
             }
         }
 
