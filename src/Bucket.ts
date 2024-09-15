@@ -373,7 +373,11 @@ export class Bucket {
             })
         );
 
-        return result.$metadata.httpStatusCode === 200;
+        return (
+            result.$metadata.httpStatusCode &&
+            result.$metadata.httpStatusCode >= 200 &&
+            result.$metadata.httpStatusCode < 300
+        );
     }
 
     /**
