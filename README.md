@@ -36,7 +36,6 @@ pnpm install node-cloudflare-r2
 
 ```javascript
 import { R2 } from 'node-cloudflare-r2';
-import { createReadStream } from 'fs';
 
 // Initialize R2
 const r2 = new R2({
@@ -65,6 +64,7 @@ console.log(upload);
     objectKey: 'destination_file_name.ext',
     uri: 'destination_file_name.ext',
     publicUrl: 'https://pub-xxxxxxxxxxxxxxxxxxxxxxxxx.r2.dev/destination_file_name.ext',
+    publicUrls: ['https://pub-xxxxxxxxxxxxxxxxxxxxxxxxx.r2.dev/destination_file_name.ext'],
     etag: '',
     versionId: '',
     }
