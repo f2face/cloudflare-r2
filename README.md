@@ -25,11 +25,11 @@ yarn add @rivo-gg/cloudflare-r2
 ```
 
 > It is highly recommended that you use a specific version number in your installation to anticipate any breaking changes that may occur in future releases. For example: \
-> `npm install @rivo-gg/cloudflare-r2@0.0.1` \
+> `npm install @rivo-gg/cloudflare-r2@1.0.` \
 > or \
-> `pnpm add @rivo-gg/cloudflare-r2@0.0.1` \
+> `pnpm add @rivo-gg/cloudflare-r2@1.0.0` \
 > or \
-> `yarn add @rivo-gg/cloudflare-r2@0.0.1` \
+> `yarn add @rivo-gg/cloudflare-r2@1.0.0` \
 > \
 > Check the latest version number in the [release page](https://github.com/rivo-gg/cloudflare-r2/releases).
 
