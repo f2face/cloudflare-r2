@@ -1,15 +1,15 @@
 {
-    "compilerOptions": {
-        "target": "es2016",
-        "module": "commonjs",
-        "allowJs": true,
-        "declaration": true,
-        "outDir": "./lib",
-        "esModuleInterop": true,
-        "forceConsistentCasingInFileNames": true,
-        "strict": true,
-        "useUnknownInCatchVariables": true,
-        "skipLibCheck": true
-    },
-    "include": ["src/**/*.ts"]
+	"compilerOptions": {
+		"target": "es2016",
+		"module": "commonjs",
+		"allowJs": true,
+		"declaration": true,
+		"outDir": "./lib",
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"strict": true,
+		"useUnknownInCatchVariables": true,
+		"skipLibCheck": true
+	},
+	"include": ["src/**/*.ts"]
 }
