@@ -1,11 +1,6 @@
 # Cloudflare-R2
 
-This is a wrapper of the AWS S3 client library, designed to provide a user-friendly and efficient way to interact with Cloudflare R2 API in Node.js
-
-### Why make this library?
-
--   As of the writing of this README, there is no official Node.js library for Cloudflare R2.
--   Interacting with object storage APIs, especially Cloudflare R2, should be simple and straightforward.
+This is a fork of the node-cloudflare-r2 wrapper by @f2face, designed to provide a user-friendly and efficient way to interact with Cloudflare R2 API in Node.js
 
 > ⚠ This library is currently in development and is not yet ready for production use. It is subject to change and may contain bugs or other issues. Please use it at your own risk.
 
@@ -14,41 +9,49 @@ This is a wrapper of the AWS S3 client library, designed to provide a user-frien
 #### npm
 
 ```bash
-npm install node-cloudflare-r2
+npm install @rivo-gg/cloudflare-r2
 ```
 
 #### pnpm
 
 ```bash
-pnpm install node-cloudflare-r2
+pnpm add @rivo-gg/cloudflare-r2
+```
+
+#### yarn
+
+```bash
+yarn add @rivo-gg/cloudflare-r2
 ```
 
 > It is highly recommended that you use a specific version number in your installation to anticipate any breaking changes that may occur in future releases. For example: \
-> `npm install node-cloudflare-r2@0.2.0` \
+> `npm install @rivo-gg/cloudflare-r2@0.0.1` \
 > or \
-> `pnpm install node-cloudflare-r2@0.2.0` \
+> `pnpm add @rivo-gg/cloudflare-r2@0.0.1` \
+> or \
+> `yarn add @rivo-gg/cloudflare-r2@0.0.1` \
 > \
-> Check the latest version number in the [release page](https://github.com/f2face/cloudflare-r2/releases).
+> Check the latest version number in the [release page](https://github.com/rivo-gg/cloudflare-r2/releases).
 
 ## Examples
 
 ### Basic usage
 
 ```javascript
-import { R2 } from 'node-cloudflare-r2';
+import { R2 } from "@rivo-gg/cloudflare-r2";
 
 // Initialize R2
 const r2 = new R2({
-    accountId: '<YOUR_ACCOUNT_ID>',
-    accessKeyId: '<YOUR_R2_ACCESS_KEY_ID>',
-    secretAccessKey: '<YOUR_R2_SECRET_ACCESS_KEY>',
+  accountId: "<YOUR_ACCOUNT_ID>",
+  accessKeyId: "<YOUR_R2_ACCESS_KEY_ID>",
+  secretAccessKey: "<YOUR_R2_SECRET_ACCESS_KEY>",
 });
 
 // Initialize bucket instance
-const bucket = r2.bucket('<BUCKET_NAME>');
+const bucket = r2.bucket("<BUCKET_NAME>");
 
 // [Optional] Provide the public URL(s) of your bucket, if its public access is allowed.
-bucket.provideBucketPublicUrl('https://pub-xxxxxxxxxxxxxxxxxxxxxxxxx.r2.dev');
+bucket.provideBucketPublicUrl("https://pub-xxxxxxxxxxxxxxxxxxxxxxxxx.r2.dev");
 
 // Check if the bucket exists
 console.log(await bucket.exists()); // true
@@ -57,7 +60,10 @@ console.log(await bucket.exists()); // true
 ### Upload local file (simple)
 
 ```javascript
-const upload = await bucket.uploadFile('/path/to/file', 'destination_file_name.ext');
+const upload = await bucket.uploadFile(
+  "/path/to/file",
+  "destination_file_name.ext"
+);
 console.log(upload);
 /*
 {
@@ -75,7 +81,10 @@ console.log(upload);
 
 ```javascript
 // Generate signed link that expires after 3600 seconds.
-const signedUrl = await bucket.getObjectSignedUrl('destination_file_name.ext', 3600);
+const signedUrl = await bucket.getObjectSignedUrl(
+  "destination_file_name.ext",
+  3600
+);
 console.log(signedUrl);
 /*
 https://bucket-name.cloudflare-account-id.r2.cloudflarestorage.com/destination_file_name.ext?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=...&X-Amz-Date=...&X-Amz-Expires=60&X-Amz-Signature=...&X-Amz-SignedHeaders=host&x-id=GetObject
@@ -86,16 +95,16 @@ https://bucket-name.cloudflare-account-id.r2.cloudflarestorage.com/destination_f
 
 ```javascript
 // Upload text content
-const content = 'Lorem ipsum';
-const uploadContent = await bucket.upload(content, 'lorem-ipsum.txt');
+const content = "Lorem ipsum";
+const uploadContent = await bucket.upload(content, "lorem-ipsum.txt");
 ```
 
 ```javascript
-import { createReadStream } from 'fs';
+import { createReadStream } from "fs";
 
 // Upload from fs.createReadStream()
-const stream = createReadStream('/path/to/file');
-const uploadStream = await bucket.upload(stream, 'destination_file_name2.ext');
+const stream = createReadStream("/path/to/file");
+const uploadStream = await bucket.upload(stream, "destination_file_name2.ext");
 ```
 
 ### Upload stream (advanced)
@@ -104,8 +113,15 @@ This `bucket.uploadStream()` method allows uploading big file or piping stream o
 
 ```javascript
 // Let's say, you want to record a live stream and pipe it directly to your bucket.
-import { spawn } from 'child_process';
+import { spawn } from "child_process";
 
-const streamlink = spawn('streamlink', ['--stdout', '<LIVE_STREAM_HLS_URL>', 'best']);
-const uploadLiveStreamVideo = await bucket.uploadStream(streamlink.stdout, 'my_live_stream.ts');
+const streamlink = spawn("streamlink", [
+  "--stdout",
+  "<LIVE_STREAM_HLS_URL>",
+  "best",
+]);
+const uploadLiveStreamVideo = await bucket.uploadStream(
+  streamlink.stdout,
+  "my_live_stream.ts"
+);
 ```

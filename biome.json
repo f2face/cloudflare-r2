@@ -1,0 +1,40 @@
+{
+	"$schema": "https://biomejs.dev/schemas/1.9.0/schema.json",
+	"files": {
+		"ignore": ["dist/**/*.*", "*.yml"],
+		"ignoreUnknown": true
+	},
+	"vcs": {
+		"clientKind": "git",
+		"defaultBranch": "main",
+		"enabled": true,
+		"useIgnoreFile": true
+	},
+	"formatter": {
+		"lineWidth": 120
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"style": {
+				"noCommaOperator": "off",
+				"noNamespace": "error",
+				"noNegationElse": "error",
+				"noNonNullAssertion": "off",
+				"useCollapsedElseIf": "error",
+				"useShorthandArrayType": "error",
+				"useShorthandAssign": "error"
+			},
+			"suspicious": {
+				"noApproximativeNumericConstant": "error",
+				"noConstEnum": "off",
+				"noExplicitAny": "off",
+				"noMisrefactoredShorthandAssign": "error"
+			}
+		}
+	},
+	"organizeImports": {
+		"enabled": true
+	}
+}
