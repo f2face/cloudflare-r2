@@ -10,6 +10,7 @@ import {
     ListObjectsCommand,
     PutObjectCommand,
     type S3Client as R2,
+    S3ClientConfig
 } from '@aws-sdk/client-s3';
 import { Upload, type Progress } from '@aws-sdk/lib-storage';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -20,7 +21,7 @@ import type { CORSPolicy, HeadObjectResponse, ObjectListResponse, UploadFileResp
 
 export class Bucket {
     private r2: R2;
-    private endpoint: string;
+    private endpoint: S3ClientConfig['endpoint'];
     private bucketPublicUrls: string[] = [];
 
     /**
@@ -41,10 +42,10 @@ export class Bucket {
      * @param bucketName Name of the bucket.
      * @param endpoint Cloudflare R2 base endpoint.
      */
-    constructor(r2: R2, bucketName: string, endpoint: string) {
+    constructor(r2: R2, bucketName: string, endpoint: S3ClientConfig['endpoint']) {
         this.r2 = r2;
         this.name = bucketName;
-        this.endpoint = new URL(endpoint).origin;
+        this.endpoint = endpoint;
         this.uri = `${this.endpoint}/${this.name}`;
     }
 
