@@ -7,7 +7,7 @@ This is a wrapper of the AWS S3 client library, designed to provide a user-frien
 -   As of the writing of this README, there is no official Node.js library for Cloudflare R2.
 -   Interacting with object storage APIs, especially Cloudflare R2, should be simple and straightforward.
 
-> ⚠ This library is currently in development and is not yet ready for production use. It is subject to change and may contain bugs or other issues. Please use it at your own risk.
+> ⚠ This library is currently in development and may not be ready for production use. It is subject to change and may contain bugs or other issues. Please use it at your own risk.
 
 ## Installation
 
@@ -24,9 +24,9 @@ pnpm install node-cloudflare-r2
 ```
 
 > It is highly recommended that you use a specific version number in your installation to anticipate any breaking changes that may occur in future releases. For example: \
-> `npm install node-cloudflare-r2@0.2.0` \
+> `npm install node-cloudflare-r2@0.4.0` \
 > or \
-> `pnpm install node-cloudflare-r2@0.2.0` \
+> `pnpm install node-cloudflare-r2@0.4.0` \
 > \
 > Check the latest version number in the [release page](https://github.com/f2face/cloudflare-r2/releases).
 
@@ -109,3 +109,7 @@ import { spawn } from 'child_process';
 const streamlink = spawn('streamlink', ['--stdout', '<LIVE_STREAM_HLS_URL>', 'best']);
 const uploadLiveStreamVideo = await bucket.uploadStream(streamlink.stdout, 'my_live_stream.ts');
 ```
+
+## Credits
+
+Thanks to all [contributors](https://github.com/f2face/cloudflare-r2/graphs/contributors) who have helped improve this project.
