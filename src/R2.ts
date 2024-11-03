@@ -1,4 +1,4 @@
-import { CreateBucketCommand, DeleteBucketCommand, ListBucketsCommand, S3Client } from '@aws-sdk/client-s3';
+import { CreateBucketCommand, DeleteBucketCommand, ListBucketsCommand, S3Client, S3ClientConfig } from '@aws-sdk/client-s3';
 import { Bucket } from './Bucket';
 import type { BucketList, CORSPolicy, CloudflareR2Config } from './types';
 
@@ -7,10 +7,12 @@ export class R2 {
     private r2: S3Client;
     public endpoint: string;
 
-    constructor(config: CloudflareR2Config) {
+    constructor(config: CloudflareR2Config, overrides?: S3ClientConfig) {
         this.config = config;
 
-        if (this.config.jurisdiction) {
+        if (overrides?.endpoint) {
+            this.endpoint = overrides.endpoint
+        } else if (this.config.jurisdiction) {
             this.endpoint = `https://${this.config.accountId}.${this.config.jurisdiction}.r2.cloudflarestorage.com`;
         } else {
             this.endpoint = `https://${this.config.accountId}.r2.cloudflarestorage.com`;
@@ -23,6 +25,7 @@ export class R2 {
                 secretAccessKey: this.config.secretAccessKey,
             },
             region: 'auto',
+            ...overrides
         });
     }
 
