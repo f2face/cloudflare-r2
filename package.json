@@ -1,6 +1,6 @@
 {
     "name": "node-cloudflare-r2",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "description": "S3 wrapper for Cloudflare R2.",
     "main": "./lib/index.js",
     "scripts": {
@@ -38,9 +38,9 @@
         "url": "https://github.com/f2face/cloudflare-r2.git"
     },
     "dependencies": {
-        "@aws-sdk/client-s3": "^3.685.0",
-        "@aws-sdk/lib-storage": "^3.685.0",
-        "@aws-sdk/s3-request-presigner": "^3.685.0"
+        "@aws-sdk/client-s3": "^3.709.0",
+        "@aws-sdk/lib-storage": "^3.709.0",
+        "@aws-sdk/s3-request-presigner": "^3.709.0"
     },
     "devDependencies": {
         "@tsconfig/recommended": "^1.0.8",
