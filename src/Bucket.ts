@@ -10,7 +10,7 @@ import {
     ListObjectsCommand,
     PutObjectCommand,
     type S3Client as R2,
-    S3ClientConfig
+    type S3ClientConfig,
 } from '@aws-sdk/client-s3';
 import { Upload, type Progress } from '@aws-sdk/lib-storage';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -20,8 +20,8 @@ import type { Readable } from 'stream';
 import type { CORSPolicy, HeadObjectResponse, ObjectListResponse, UploadFileResponse } from './types';
 
 export class Bucket {
-    private r2: R2;
-    private endpoint: S3ClientConfig['endpoint'];
+    private readonly r2: R2;
+    private readonly endpoint: S3ClientConfig['endpoint'];
     private bucketPublicUrls: string[] = [];
 
     /**
