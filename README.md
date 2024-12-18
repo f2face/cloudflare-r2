@@ -71,14 +71,27 @@ console.log(upload);
 */
 ```
 
-### Generate signed URL with expiration time
+### Generate GET signed URL with expiration time
+[More about signed URLS on R2](https://developers.cloudflare.com/r2/examples/aws/aws-sdk-js/#generate-presigned-urls)
 
 ```javascript
-// Generate signed link that expires after 3600 seconds.
+// Generate GET signed link that expires after 3600 seconds.
 const signedUrl = await bucket.getObjectSignedUrl('destination_file_name.ext', 3600);
 console.log(signedUrl);
 /*
 https://bucket-name.cloudflare-account-id.r2.cloudflarestorage.com/destination_file_name.ext?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=...&X-Amz-Date=...&X-Amz-Expires=60&X-Amz-Signature=...&X-Amz-SignedHeaders=host&x-id=GetObject
+*/
+```
+
+### Generate PUT signed URL with expiration time
+[More about signed URLS on R2](https://developers.cloudflare.com/r2/examples/aws/aws-sdk-js/#generate-presigned-urls)
+
+```javascript
+// Generate signed link that expires after 3600 seconds.
+const signedUrl = await bucket.putObjectSignedUrl('destination_file_name.ext', 3600);
+console.log(signedUrl);
+/*
+https://bucket-name.cloudflare-account-id.r2.cloudflarestorage.com/destination_file_name.ext?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=...>&X-Amz-Expires=3600&X-Amz-Signature=<signature>&X-Amz-SignedHeaders=host
 */
 ```
 
