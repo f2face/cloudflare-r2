@@ -102,7 +102,8 @@ export class Bucket {
     }
 
     /**
-     * Returns the signed URL of an object. This method does not check whether the object exists or not.
+     * Returns the signed URL of an object used to perform a "GET" action.
+     * This method does not check whether the object exists or not.
      * @param objectKey
      * @param expiresIn Expiration time in seconds.
      */
@@ -111,8 +112,20 @@ export class Bucket {
             Bucket: this.name,
             Key: objectKey,
         });
-        const signedUrl = await getSignedUrl(this.r2, obj, { expiresIn });
-        return signedUrl;
+        return getSignedUrl(this.r2, obj, { expiresIn });
+    }
+
+    /**
+     * Returns the signed URL of an object used to perform a "PUT" action.
+     * @param objectKey
+     * @param expiresIn Expiration time in seconds.
+     */
+    public async putObjectSignedUrl(objectKey: string, expiresIn: number): Promise<string> {
+        const obj = new PutObjectCommand({
+            Bucket: this.name,
+            Key: objectKey,
+        });
+        return getSignedUrl(this.r2, obj, { expiresIn });
     }
 
     /**

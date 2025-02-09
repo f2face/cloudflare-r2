@@ -36,6 +36,14 @@ export class R2 {
     }
 
     /**
+     * Returns the S3 client instance. Should be used as a last resort if you need extra custom functionality.
+     * @note It is recommended to use other provided methods for specific operations instead of directly accessing the client.
+     */
+    public __unsafe_getClient(): S3Client {
+        return this.r2;
+    }
+
+    /**
      * Returns a `Bucket` object that represents the specified storage bucket.
      * @param bucketName The name of the storage bucket.
      * @returns A `Bucket` object that represents the specified storage bucket.
