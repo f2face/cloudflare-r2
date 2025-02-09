@@ -448,10 +448,11 @@ export class Bucket {
      * @param destinationObjectKey The key of the destination object where the source object will be copied to.
      */
     public async copyObject(sourceObjectKey: string, destinationObjectKey: string) {
+        const copySource = `${this.name}/${sourceObjectKey}`;
         const result = await this.r2.send(
             new CopyObjectCommand({
                 Bucket: this.name,
-                CopySource: sourceObjectKey,
+                CopySource: copySource,
                 Key: destinationObjectKey,
             })
         );
