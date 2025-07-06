@@ -87,7 +87,7 @@ https://bucket-name.cloudflare-account-id.r2.cloudflarestorage.com/destination_f
 [More about signed URLS on R2](https://developers.cloudflare.com/r2/examples/aws/aws-sdk-js/#generate-presigned-urls)
 
 ```javascript
-// Generate signed link that expires after 3600 seconds.
+// Generate PUT signed link that expires after 3600 seconds.
 const signedUrl = await bucket.putObjectSignedUrl('destination_file_name.ext', 3600);
 console.log(signedUrl);
 /*
