@@ -5,8 +5,8 @@ import {
     S3Client,
     type S3ClientConfig,
 } from '@aws-sdk/client-s3';
-import { Bucket } from './Bucket';
-import type { BucketList, CORSPolicy, CloudflareR2Config } from './types';
+import { Bucket } from './Bucket.js';
+import type { BucketList, CORSPolicy, CloudflareR2Config } from './types.js';
 
 export class R2 {
     private readonly config: Readonly<CloudflareR2Config>;

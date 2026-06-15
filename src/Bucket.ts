@@ -17,7 +17,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { type ReadStream, createReadStream, type PathLike } from 'fs';
 import { basename } from 'path';
 import type { Readable } from 'stream';
-import type { CORSPolicy, HeadObjectResponse, ObjectListResponse, UploadFileResponse } from './types';
+import type { CORSPolicy, HeadObjectResponse, ObjectListResponse, UploadFileResponse } from './types.js';
 
 export class Bucket {
     private readonly r2: R2;

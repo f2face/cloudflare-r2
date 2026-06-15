@@ -1,15 +1,17 @@
 {
     "compilerOptions": {
-        "target": "es2016",
-        "module": "commonjs",
-        "allowJs": true,
-        "declaration": true,
-        "outDir": "./lib",
+        "target": "es2022",
+        "module": "nodenext",
+        "moduleResolution": "nodenext",
+        "rootDir": "./src",
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
         "strict": true,
-        "useUnknownInCatchVariables": true,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "types": ["node"]
     },
-    "include": ["src/**/*.ts"]
+    "include": ["src/**/*.ts"],
+    "exclude": ["node_modules"]
 }
