@@ -6,10 +6,9 @@
     "module": "./lib/esm/index.js",
     "types": "./lib/esm/index.d.ts",
     "scripts": {
-        "build": "pnpm clean && tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json && node scripts/postbuild.mjs",
-        "build:watch:cjs": "pnpm clean && tsc -p tsconfig.cjs.json --watch",
-        "build:watch:esm": "pnpm clean && tsc -p tsconfig.esm.json --watch",
-        "clean": "rimraf lib/",
+        "build": "rimraf lib/ && tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json && node scripts/postbuild.mjs",
+        "build:watch:cjs": "rimraf lib/ && tsc -p tsconfig.cjs.json --watch",
+        "build:watch:esm": "rimraf lib/ && tsc -p tsconfig.esm.json --watch",
         "test": "jest",
         "test:coverage": "jest --coverage"
     },
