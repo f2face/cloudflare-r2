@@ -237,12 +237,12 @@ Uploads using multipart upload internally. Best for large files or live streams.
 await bucket.uploadStream(largeBuffer, 'bigfile.bin');
 
 // With progress tracking
-await bucket.uploadStream(stream, 'bigfile.bin', undefined, undefined, (progress) => {
+await bucket.uploadStream(stream, 'bigfile.bin', fileMetadata, fileMimeType, (progress) => {
     console.log(`${progress.loaded} / ${progress.total} bytes`);
 });
 
 // With custom part size (avoid 10,000 part limit for very large files)
-await bucket.uploadStream(stream, 'huge.bin', undefined, undefined, undefined, {
+await bucket.uploadStream(stream, 'huge.bin', fileMetadata, fileMimeType, onProgress, {
     partSize: 50 * 1024 * 1024, // 50 MB per part
     queueSize: 8, // 8 concurrent uploads
 });
