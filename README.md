@@ -187,7 +187,7 @@ const policies = await r2.getBucketCors('my-bucket');
 
 #### `r2.getBucketRegion(bucketName)`
 
-Returns the region of a bucket. For Cloudflare R2 this is always `'auto'`.
+Returns the region of a bucket. For Cloudflare R2, this is the bucket's location hint (e.g. `'WNAM'`, `'WEUR'`, `'APAC'`) if one was set, otherwise `'auto'`.
 
 ```js
 const region = await r2.getBucketRegion('my-bucket'); // 'APAC'
@@ -328,10 +328,19 @@ const policies = await bucket.getCorsPolicies();
 // [{ allowedHeaders, allowedMethods, allowedOrigins, exposeHeaders, id, maxAgeSeconds }]
 ```
 
-#### `bucket.getRegion()` / `bucket.getEncryption()`
+#### `bucket.getRegion()`
+
+Returns the bucket's location constraint. For Cloudflare R2, this is the bucket's location hint (e.g. `'WNAM'`, `'WEUR'`, `'APAC'`) if one was set, otherwise `'auto'`.
 
 ```js
 console.log(await bucket.getRegion()); // 'APAC'
+```
+
+#### `bucket.getEncryption()`
+
+Returns the server-side encryption configuration of the bucket.
+
+```js
 console.log(await bucket.getEncryption()); // [{ applyServerSideEncryptionByDefault, bucketKeyEnabled }]
 ```
 
