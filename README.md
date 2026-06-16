@@ -60,7 +60,7 @@ console.log(upload);
 /*
 {
     objectKey: 'destination_file_name.ext',
-    uri: 'destination_file_name.ext',
+    uri: 'https://<accountId>.r2.cloudflarestorage.com/<bucket>/destination_file_name.ext',
     publicUrl: 'https://pub-xxxxxxxxxxxxxxxxxxxxxxxxx.r2.dev/destination_file_name.ext',
     publicUrls: ['https://pub-xxxxxxxxxxxxxxxxxxxxxxxxx.r2.dev/destination_file_name.ext'],
     etag: '',
@@ -161,12 +161,13 @@ Returns `true` if the bucket exists and you have permission to access it.
 if (await r2.bucketExists('my-bucket')) { ... }
 ```
 
-#### `r2.createBucket(bucketName)`
+#### `r2.createBucket(bucketName, locationHint?)`
 
-Creates a new bucket and returns a `Bucket` instance.
+Creates a new bucket and returns a `Bucket` instance. Optionally specify a location hint (e.g. `'WNAM'`, `'WEUR'`, `'APAC'`).
 
 ```js
 const bucket = await r2.createBucket('new-bucket');
+const euBucket = await r2.createBucket('new-bucket-eu', 'WEUR');
 ```
 
 #### `r2.deleteBucket(bucketName)`
