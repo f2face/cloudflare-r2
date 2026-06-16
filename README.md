@@ -1,62 +1,60 @@
 # Cloudflare-R2
 
-This is a wrapper of the AWS S3 client library, designed to provide a user-friendly and efficient way to interact with Cloudflare R2 API in Node.js
+S3-compatible client wrapper for Cloudflare R2, supporting both ESM and CommonJS.
 
 ### Why make this library?
 
--   As of the writing of this README, there is no official Node.js library for Cloudflare R2.
--   Interacting with object storage APIs, especially Cloudflare R2, should be simple and straightforward.
-
-> ⚠ This library is currently in development and may not be ready for production use. It is subject to change and may contain bugs or other issues. Please use it at your own risk.
+- Interacting with object storage APIs, especially Cloudflare R2, should be simple and straightforward.
+- No official Node.js library exists for Cloudflare R2; the AWS SDK works but requires boilerplate.
 
 ## Installation
 
-#### npm
-
 ```bash
 npm install node-cloudflare-r2
-```
-
-#### pnpm
-
-```bash
+# or
 pnpm install node-cloudflare-r2
 ```
 
-> It is highly recommended that you use a specific version number in your installation to anticipate any breaking changes that may occur in future releases. For example: \
-> `npm install node-cloudflare-r2@0.4.0` \
-> or \
-> `pnpm install node-cloudflare-r2@0.4.0` \
-> \
-> Check the latest version number in the [release page](https://github.com/f2face/cloudflare-r2/releases).
+> It is recommended to pin a specific version to avoid unexpected breaking changes. Check the [release page](https://github.com/f2face/cloudflare-r2/releases) for the latest version.
 
-## Examples
+## Usage
+
+The package supports both `import` (ESM) and `require` (CommonJS).
+
+```js
+// ESM
+import { R2 } from 'node-cloudflare-r2';
+
+// CommonJS
+const { R2 } = require('node-cloudflare-r2');
+```
+
+For TypeScript, types are available at the top level and via the `types` subpath:
+
+```ts
+import type { CloudflareR2Config, UploadStreamOptions } from 'node-cloudflare-r2/types';
+```
 
 ### Basic usage
 
-```javascript
-import { R2 } from 'node-cloudflare-r2';
-
-// Initialize R2
+```js
 const r2 = new R2({
     accountId: '<YOUR_ACCOUNT_ID>',
     accessKeyId: '<YOUR_R2_ACCESS_KEY_ID>',
     secretAccessKey: '<YOUR_R2_SECRET_ACCESS_KEY>',
 });
 
-// Initialize bucket instance
 const bucket = r2.bucket('<BUCKET_NAME>');
 
-// [Optional] Provide the public URL(s) of your bucket, if its public access is allowed.
+// Provide the public URL(s) of your bucket (optional, if public access is enabled)
 bucket.provideBucketPublicUrl('https://pub-xxxxxxxxxxxxxxxxxxxxxxxxx.r2.dev');
 
-// Check if the bucket exists
 console.log(await bucket.exists()); // true
 ```
 
-### Upload local file (simple)
+### Upload a local file
 
-```javascript
+```js
 const upload = await bucket.uploadFile('/path/to/file', 'destination_file_name.ext');
 console.log(upload);
 /*
@@ -67,60 +65,287 @@ console.log(upload);
     publicUrls: ['https://pub-xxxxxxxxxxxxxxxxxxxxxxxxx.r2.dev/destination_file_name.ext'],
     etag: '',
     versionId: '',
-    }
+}
 */
 ```
 
-### Generate GET signed URL with expiration time
-[More about signed URLS on R2](https://developers.cloudflare.com/r2/examples/aws/aws-sdk-js/#generate-presigned-urls)
+### Upload string, buffer, or stream
 
-```javascript
-// Generate GET signed link that expires after 3600 seconds.
-const signedUrl = await bucket.getObjectSignedUrl('destination_file_name.ext', 3600);
-console.log(signedUrl);
-/*
-https://bucket-name.cloudflare-account-id.r2.cloudflarestorage.com/destination_file_name.ext?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=...&X-Amz-Date=...&X-Amz-Expires=60&X-Amz-Signature=...&X-Amz-SignedHeaders=host&x-id=GetObject
-*/
-```
+```js
+// Text content
+await bucket.upload('Lorem ipsum', 'lorem-ipsum.txt');
 
-### Generate PUT signed URL with expiration time
-[More about signed URLS on R2](https://developers.cloudflare.com/r2/examples/aws/aws-sdk-js/#generate-presigned-urls)
-
-```javascript
-// Generate PUT signed link that expires after 3600 seconds.
-const signedUrl = await bucket.putObjectSignedUrl('destination_file_name.ext', 3600);
-console.log(signedUrl);
-/*
-https://bucket-name.cloudflare-account-id.r2.cloudflarestorage.com/destination_file_name.ext?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=...>&X-Amz-Expires=3600&X-Amz-Signature=<signature>&X-Amz-SignedHeaders=host
-*/
-```
-
-### Upload string or binary data or stream
-
-```javascript
-// Upload text content
-const content = 'Lorem ipsum';
-const uploadContent = await bucket.upload(content, 'lorem-ipsum.txt');
-```
-
-```javascript
+// From a readable stream
 import { createReadStream } from 'fs';
-
-// Upload from fs.createReadStream()
 const stream = createReadStream('/path/to/file');
-const uploadStream = await bucket.upload(stream, 'destination_file_name2.ext');
+await bucket.upload(stream, 'destination_file_name2.ext');
 ```
 
-### Upload stream (advanced)
+### Upload with multipart (large files)
 
-This `bucket.uploadStream()` method allows uploading big file or piping stream or stdout directly to your bucket (using multipart upload internally).
+Use `uploadStream()` for large files or live streams. It uses multipart upload internally and accepts tuning options to avoid the 10,000 part limit.
 
-```javascript
-// Let's say, you want to record a live stream and pipe it directly to your bucket.
+```js
 import { spawn } from 'child_process';
 
 const streamlink = spawn('streamlink', ['--stdout', '<LIVE_STREAM_HLS_URL>', 'best']);
-const uploadLiveStreamVideo = await bucket.uploadStream(streamlink.stdout, 'my_live_stream.ts');
+
+// With default multipart settings
+await bucket.uploadStream(streamlink.stdout, 'my_live_stream.ts');
+
+// With custom part size and concurrency (for very large files)
+await bucket.uploadStream(largeBuffer, 'bigfile.bin', undefined, undefined, undefined, {
+    partSize: 50 * 1024 * 1024, // 50 MB per part
+    queueSize: 8, // 8 concurrent uploads
+});
+```
+
+### Generate signed URLs
+
+```js
+// GET signed URL (expires after 3600 seconds)
+const getUrl = await bucket.getObjectSignedUrl('file.ext', 3600);
+
+// PUT signed URL (expires after 3600 seconds)
+const putUrl = await bucket.putObjectSignedUrl('file.ext', 3600);
+```
+
+[More about signed URLs on R2](https://developers.cloudflare.com/r2/examples/aws/aws-sdk-js/#generate-presigned-urls)
+
+## API
+
+### R2
+
+#### `new R2(config, overrides?)`
+
+Creates a new R2 client instance.
+
+```js
+const r2 = new R2({
+    accountId: '<YOUR_ACCOUNT_ID>',
+    accessKeyId: '<YOUR_R2_ACCESS_KEY_ID>',
+    secretAccessKey: '<YOUR_R2_SECRET_ACCESS_KEY>',
+    jurisdiction: 'eu', // optional: 'eu' or 'fedramp'
+});
+```
+
+You can also pass S3 client overrides as a second argument:
+
+```js
+const r2 = new R2(config, { endpoint: 'https://custom.example.com' });
+```
+
+#### `r2.bucket(bucketName)`
+
+Returns a `Bucket` instance for the given bucket name.
+
+```js
+const bucket = r2.bucket('my-bucket');
+```
+
+#### `r2.listBuckets()`
+
+Returns all buckets owned by the authenticated account.
+
+```js
+const { buckets, owner } = await r2.listBuckets();
+// buckets: [{ name, creationDate }, ...]
+// owner: { id, displayName }
+```
+
+#### `r2.bucketExists(bucketName)`
+
+Returns `true` if the bucket exists and you have permission to access it.
+
+```js
+if (await r2.bucketExists('my-bucket')) { ... }
+```
+
+#### `r2.createBucket(bucketName)`
+
+Creates a new bucket and returns a `Bucket` instance.
+
+```js
+const bucket = await r2.createBucket('new-bucket');
+```
+
+#### `r2.deleteBucket(bucketName)`
+
+Deletes a bucket. Returns `true` on success, throws on failure.
+
+```js
+await r2.deleteBucket('old-bucket');
+```
+
+#### `r2.getBucketCors(bucketName)`
+
+Returns the CORS configuration for a bucket. Shortcut for `r2.bucket(name).getCorsPolicies()`.
+
+```js
+const policies = await r2.getBucketCors('my-bucket');
+```
+
+#### `r2.getBucketRegion(bucketName)`
+
+Returns the region of a bucket. For Cloudflare R2 this is always `'auto'`.
+
+```js
+const region = await r2.getBucketRegion('my-bucket'); // 'APAC'
+```
+
+---
+
+### Bucket
+
+#### `bucket.name` / `bucket.uri`
+
+Read-only properties for the bucket name and its R2 endpoint URI.
+
+#### `bucket.exists()`
+
+Returns `true` if the bucket exists and is accessible.
+
+```js
+console.log(await bucket.exists()); // true
+```
+
+#### `bucket.upload(contents, destination, customMetadata?, mimeType?)`
+
+Uploads a string, `Buffer`, `Uint8Array`, or `Readable` stream to the bucket.
+
+```js
+await bucket.upload('Hello world', 'hello.txt');
+await bucket.upload(buffer, 'data.bin', { author: 'me' }, 'application/octet-stream');
+```
+
+#### `bucket.uploadFile(filePath, destination?, customMetadata?, mimeType?)`
+
+Uploads a local file from disk. If `destination` is omitted, the file's basename is used.
+
+```js
+await bucket.uploadFile('/path/to/photo.jpg');
+await bucket.uploadFile('/path/to/video.mp4', 'videos/intro.mp4');
+```
+
+#### `bucket.uploadStream(contents, destination, customMetadata?, mimeType?, onProgress?, options?)`
+
+Uploads using multipart upload internally. Best for large files or live streams. Use the `options` parameter to tune part size and concurrency.
+
+```js
+// Basic
+await bucket.uploadStream(largeBuffer, 'bigfile.bin');
+
+// With progress tracking
+await bucket.uploadStream(stream, 'bigfile.bin', undefined, undefined, (progress) => {
+    console.log(`${progress.loaded} / ${progress.total} bytes`);
+});
+
+// With custom part size (avoid 10,000 part limit for very large files)
+await bucket.uploadStream(stream, 'huge.bin', undefined, undefined, undefined, {
+    partSize: 50 * 1024 * 1024, // 50 MB per part
+    queueSize: 8, // 8 concurrent uploads
+});
+```
+
+All upload methods return an `UploadFileResponse`:
+
+```ts
+{ objectKey, uri, publicUrl, publicUrls, etag?, versionId? }
+```
+
+#### `bucket.deleteObject(objectKey)`
+
+Deletes an object from the bucket.
+
+```js
+await bucket.deleteObject('old-file.txt');
+```
+
+#### `bucket.headObject(objectKey)`
+
+Returns metadata for an object without downloading it.
+
+```js
+const meta = await bucket.headObject('file.txt');
+// { lastModified, contentLength, acceptRanges, etag, contentType, customMetadata }
+```
+
+#### `bucket.listObjects(maxResults?, marker?)`
+
+Lists up to 1,000 objects in the bucket. Use `marker` for pagination.
+
+```js
+const page1 = await bucket.listObjects(100);
+// { objects, continuationToken, nextContinuationToken }
+
+// Next page
+const page2 = await bucket.listObjects(100, page1.nextContinuationToken);
+```
+
+Each object in the list: `{ key, lastModified, etag, checksumAlgorithm, size, storageClass }`.
+
+#### `bucket.copyObject(sourceKey, destinationKey)`
+
+Copies an object within the same bucket.
+
+```js
+await bucket.copyObject('source.txt', 'backup/copy.txt');
+```
+
+#### `bucket.objectExists(objectKey)`
+
+Returns `true` if the object exists in the bucket.
+
+```js
+if (await bucket.objectExists('file.txt')) { ... }
+```
+
+#### `bucket.getObjectPublicUrls(objectKey)`
+
+Returns all public URLs for an object (requires `provideBucketPublicUrl` to be set first).
+
+```js
+bucket.provideBucketPublicUrl('https://pub-xxxx.r2.dev');
+console.log(bucket.getObjectPublicUrls('photo.jpg'));
+// ['https://pub-xxxx.r2.dev/photo.jpg']
+```
+
+#### `bucket.getObjectSignedUrl(objectKey, expiresIn)` / `bucket.putObjectSignedUrl(objectKey, expiresIn)`
+
+Generates pre-signed URLs for GET or PUT operations, valid for `expiresIn` seconds.
+
+```js
+const getUrl = await bucket.getObjectSignedUrl('file.pdf', 3600);
+const putUrl = await bucket.putObjectSignedUrl('uploads/file.pdf', 7200);
+```
+
+#### `bucket.getCorsPolicies()`
+
+Returns the CORS configuration of the bucket.
+
+```js
+const policies = await bucket.getCorsPolicies();
+// [{ allowedHeaders, allowedMethods, allowedOrigins, exposeHeaders, id, maxAgeSeconds }]
+```
+
+#### `bucket.getRegion()` / `bucket.getEncryption()`
+
+```js
+console.log(await bucket.getRegion()); // 'APAC'
+console.log(await bucket.getEncryption()); // [{ applyServerSideEncryptionByDefault, bucketKeyEnabled }]
+```
+
+#### `bucket.provideBucketPublicUrl(url)` / `bucket.getPublicUrls()`
+
+Sets and retrieves the public-facing URL(s) for the bucket. Accepts a single URL or an array.
+
+```js
+bucket.provideBucketPublicUrl('https://pub-xxxx.r2.dev');
+// or multiple custom domains
+bucket.provideBucketPublicUrl(['https://cdn1.example.com', 'https://cdn2.example.com']);
+
+console.log(bucket.getPublicUrls());
+// ['https://pub-xxxx.r2.dev', 'https://cdn1.example.com', 'https://cdn2.example.com']
 ```
 
 ## Credits
