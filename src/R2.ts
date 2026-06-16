@@ -1,4 +1,5 @@
 import {
+    BucketLocationConstraint,
     CreateBucketCommand,
     DeleteBucketCommand,
     ListBucketsCommand,
@@ -6,7 +7,7 @@ import {
     type S3ClientConfig,
 } from '@aws-sdk/client-s3';
 import { Bucket } from './Bucket.js';
-import type { BucketList, CORSPolicy, CloudflareR2Config } from './types.js';
+import type { BucketList, BucketLocationHint, CORSPolicy, CloudflareR2Config } from './types.js';
 
 export class R2 {
     private readonly config: Readonly<CloudflareR2Config>;
@@ -45,7 +46,7 @@ export class R2 {
 
     /**
      * Returns a `Bucket` object that represents the specified storage bucket.
-     * @param bucketName The name of the storage bucket.
+     * @param bucketName - The name of the storage bucket.
      * @returns A `Bucket` object that represents the specified storage bucket.
      */
     public bucket(bucketName: string): Bucket {
@@ -55,6 +56,7 @@ export class R2 {
     /**
      * Returns a list of all buckets owned by the authenticated sender of the request.
      * @async
+     * @returns A list of buckets with their names, creation dates, and owner info.
      */
     public async listBuckets(): Promise<BucketList> {
         const result = await this.r2.send(new ListBucketsCommand({}));
@@ -75,21 +77,29 @@ export class R2 {
     /**
      * Determines if a bucket exists and you have permission to access it.
      * @async
-     * @param bucketName
+     * @param bucketName - The name of the storage bucket.
+     * @returns `true` if the bucket exists and is accessible, `false` otherwise.
      */
     public async bucketExists(bucketName: string): Promise<boolean> {
         return await this.bucket(bucketName).exists();
     }
 
     /**
-     * Create a new R2 bucket and returns `Bucket` object.
+     * Creates a new R2 bucket and returns a `Bucket` object for it.
      * @async
-     * @param bucketName
+     * @param bucketName - The name of the bucket to create.
+     * @param locationHint - Optional location hint for the bucket (e.g. `'WNAM'`, `'WEUR'`, `'APAC'`).
+     * @returns A `Bucket` object representing the newly created bucket.
      */
-    public async createBucket(bucketName: string): Promise<Bucket> {
+    public async createBucket(bucketName: string, locationHint?: BucketLocationHint): Promise<Bucket> {
         await this.r2.send(
             new CreateBucketCommand({
                 Bucket: bucketName,
+                ...(locationHint !== undefined && {
+                    CreateBucketConfiguration: {
+                        LocationConstraint: locationHint as unknown as BucketLocationConstraint,
+                    },
+                }),
             })
         );
 
@@ -97,9 +107,11 @@ export class R2 {
     }
 
     /**
-     * Delete an existing bucket. Returns true if success or throws error if fail.
+     * Deletes an existing bucket.
      * @async
-     * @param bucketName
+     * @param bucketName - The name of the bucket to delete.
+     * @returns `true` if the bucket was successfully deleted.
+     * @throws An error if the bucket does not exist or cannot be deleted.
      */
     public async deleteBucket(bucketName: string): Promise<boolean> {
         const result = await this.r2.send(
@@ -112,17 +124,20 @@ export class R2 {
     }
 
     /**
-     * Returns Cross-Origin Resource Sharing (CORS) policies of the bucket.
+     * Returns the Cross-Origin Resource Sharing (CORS) policies of the bucket.
      * @async
+     * @param bucketName - The name of the storage bucket.
+     * @returns An array of CORS policy objects.
      */
     public async getBucketCors(bucketName: string): Promise<CORSPolicy[]> {
         return await this.bucket(bucketName).getCors();
     }
 
     /**
-     * Returns the region the bucket resides in. For `Cloudflare R2`, the region is always `auto`.
+     * Returns the region the bucket resides in.
      * @async
-     * @param bucketName
+     * @param bucketName - The name of the storage bucket.
+     * @returns The location constraint string (e.g. `'WNAM'`, `'WEUR'`, `'APAC'`, or `'auto'`).
      */
     public async getBucketRegion(bucketName: string): Promise<string> {
         return await this.bucket(bucketName).getRegion();

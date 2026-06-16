@@ -8,6 +8,21 @@ export type CloudflareR2Config = {
     jurisdiction?: 'eu' | 'fedramp';
 };
 
+export enum BucketLocationHint {
+    /** Western North America */
+    WesternNorthAmerica = 'WNAM',
+    /** Eastern North America */
+    EasternNorthAmerica = 'ENAM',
+    /** Western Europe */
+    WesternEurope = 'WEUR',
+    /** Eastern Europe */
+    EasternEurope = 'EEUR',
+    /** Asia-Pacific */
+    AsiaPacific = 'APAC',
+    /** Oceania */
+    Oceania = 'OC',
+}
+
 export type BucketList = {
     buckets: {
         name?: string;
@@ -61,4 +76,16 @@ export type ObjectListResponse = {
     }[];
     continuationToken?: string;
     nextContinuationToken?: string;
+};
+
+export type UploadStreamOptions = {
+    /**
+     * Size of each part in bytes. Increase this to avoid exceeding the 10,000 part limit for large files. (Default: 5 MB)
+     */
+    partSize?: number;
+
+    /**
+     * Number of concurrent parts to upload. (Default: 4)
+     */
+    queueSize?: number;
 };
